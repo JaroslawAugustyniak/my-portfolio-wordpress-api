@@ -1,0 +1,50 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# --- WordPress ---
+wp-admin/
+wp-includes/
+# wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/upgrade/
+wp-content/uploads/
+wp-content/uploads-backups/
+wp-content/uploads-webpc/
+litespeed/
+
+# plugins – ignore all
+wp-content/plugins/*
+# except .keep file and plugins-list.txt
+!wp-content/plugins/.keep
+!wp-content/plugins/portfolio-json-exporter
+
+# --- PHP ---
+vendor/
+
+assets/
+
+# --- Env ---
+.env
+.env.*
+!.env.example
+
+# --- Docker ---
+docker/mysql/data/
+docker/mysql/*.sql
+
+# --- Logs ---
+*.log
+
+# --- IDE ---
+.vscode/
+.idea/
+feniksfinanse-db-2026-02-18.zip
+u434154286_JiUA8.sql
+wp-content/languages/*

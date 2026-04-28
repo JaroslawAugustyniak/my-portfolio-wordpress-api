@@ -1,0 +1,63 @@
+{
+  "site_name": "My Portfolio",
+  "site_description": "Portfolio & Projects Showcase",
+  "site_url": "https://portfolio.local",
+  "home_url": "https://portfolio.local/",
+  "admin_email": "admin@portfolio.local",
+  "language": "pl-PL",
+  "charset": "UTF-8",
+  "timezone": "Europe/Warsaw",
+  "date_format": "j F Y",
+  "time_format": "H:i",
+  "posts_per_page": 10,
+  "logo": "/api/images/logo.png",
+  "favicon": "/api/images/favicon.ico",
+  "yoast_seo": {
+    "titles": {
+      "site-title": "My Portfolio",
+      "site-tagline": "Portfolio & Projects Showcase",
+      "title-home-wpseo": "My Portfolio - Professional Portfolio & Projects",
+      "title-author-wpseo": "Author: %%name%% - My Portfolio",
+      "title-archive-wpseo": "Archives - My Portfolio",
+      "title-search-wpseo": "Search Results for %%searchphrase%% - My Portfolio",
+      "title-404-wpseo": "Nothing here - My Portfolio",
+      "metadesc-home": "Welcome to my professional portfolio. Explore my latest projects and work samples.",
+      "metadesc-author": "Author: %%name%% - Check out their posts and projects on My Portfolio",
+      "metadesc-archive": "Archive posts from My Portfolio",
+      "metadesc-search": "Search results for %%searchphrase%% on My Portfolio",
+      "metadesc-404": "The page you are looking for cannot be found"
+    },
+    "social": {
+      "facebook_site": "https://www.facebook.com/myportfolio",
+      "instagram_url": "https://instagram.com/myportfolio",
+      "linkedin_url": "https://linkedin.com/in/myportfolio",
+      "twitter_id": "@myportfolio",
+      "company_name": "My Portfolio",
+      "company_logo": "/api/images/logo.png",
+      "og_default_image": "/api/images/og-image.jpg",
+      "company_or_person": "person",
+      "person_name": "John Doe"
+    },
+    "permalinks": {
+      "post_base": "projects",
+      "page_base": "",
+      "category_base": "category",
+      "tag_base": "tag",
+      "attachment_base": "attachment",
+      "author_base": "author"
+    },
+    "xml_sitemap": {
+      "enableXML": true,
+      "user_sitemap_enabled": true,
+      "enable_news_sitemap": false,
+      "enable_video_sitemap": false
+    },
+    "breadcrumbs": {
+      "enabled": true,
+      "home": "Home",
+      "prefix": "<nav aria-label=\"breadcrumb\">",
+      "suffix": "</nav>",
+      "separator": "/"
+    }
+  }
+}
