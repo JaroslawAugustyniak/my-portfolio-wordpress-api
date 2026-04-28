@@ -22,6 +22,9 @@ class Portfolio_JSON_Exporter {
 
     private static function get_webp_file_path($original_file) {
         // Konstruuj ścieżkę webp zachowując strukturę YYYY/m/
+        // WebP konwerter dodaje .webp na koniec zamiast zamieniać rozszerzenie
+        // Np: 1-2.png → 1-2.png.webp
+
         $uploads_dir = wp_upload_dir();
         $base_path = $uploads_dir['basedir']; // /wp-content/uploads
         $webp_base = dirname($base_path) . '/uploads-webpc/uploads'; // /wp-content/uploads-webpc/uploads
@@ -29,11 +32,8 @@ class Portfolio_JSON_Exporter {
         // Pobierz relative path od upload_dir
         $relative_path = str_replace($base_path . '/', '', $original_file);
 
-        // Konstruuj pełną ścieżkę webp
-        $webp_file = $webp_base . '/' . $relative_path;
-
-        // Zamieniaj rozszerzenie na .webp
-        $webp_file = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $webp_file);
+        // Konstruuj pełną ścieżkę webp (dodaj .webp na koniec)
+        $webp_file = $webp_base . '/' . $relative_path . '.webp';
 
         return $webp_file;
     }
@@ -43,7 +43,15 @@ class Portfolio_JSON_Exporter {
 
         $uploads_dir = wp_upload_dir();
         $base_url = $uploads_dir['baseurl'];
+        $webp_url = dirname($base_url) . '/uploads-webpc/uploads';
 
+        // Jeśli to WebP URL, usunięj /uploads-webpc/uploads/
+        if (strpos($url, $webp_url) !== false) {
+            $relative_path = str_replace($webp_url, '', $url);
+            return '/api/images' . $relative_path;
+        }
+
+        // Jeśli to zwykły URL, usunięj /uploads/
         if (strpos($url, $base_url) === 0) {
             $relative_path = str_replace($base_url, '', $url);
             return '/api/images' . $relative_path;
@@ -66,15 +74,12 @@ class Portfolio_JSON_Exporter {
                 $file_path = $base_path . $relative_path;
 
                 // Konstruuj ścieżkę webp zachowując strukturę YYYY/m/
+                // WebP konwerter dodaje .webp na koniec: 1-2.png → 1-2.png.webp
                 $relative_from_base = str_replace($base_path . '/', '', $file_path);
-                $webp_file = $webp_base . '/' . $relative_from_base;
-                $webp_file = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $webp_file);
+                $webp_file = $webp_base . '/' . $relative_from_base . '.webp';
 
                 if (file_exists($webp_file)) {
                     // Zwróć URL do webp zamiast oryginału
-                    $webp_url = str_replace($base_path, $base_url, str_replace($webp_base, $base_path, $webp_file));
-                    // Dokładniej: webp_file to /wp-content/uploads-webpc/uploads/2024/01/image.webp
-                    // Chcemy: /api/images/2024/01/image.webp
                     $webp_url_correct = str_replace(dirname($base_path) . '/uploads-webpc/uploads', $base_url, $webp_file);
                     return self::convert_image_url_to_api_path($webp_url_correct);
                 }
@@ -204,7 +209,7 @@ class Portfolio_JSON_Exporter {
             }
 
             // Pobieramy dane (przekazujemy $final_post, który jest albo oryginałem, albo tłumaczeniem)
-            $page_data = self::get_page_data($final_post, $lang);
+            $page_data = self::get_post_data($final_post, $lang);
 
             // Dodajemy informację o głównym slugu (zawsze z oryginału dla spójności)
             // $page_data['main_slug'] = $post->post_name;
@@ -493,8 +498,8 @@ class Portfolio_JSON_Exporter {
             $post_data['categories'] = $categories;
         }
 
-        // Dodaj tagi
-        $tags = wp_get_post_tags($post->ID, ['fields' => 'ids']);
+        // Dodaj tagi (nazwy zamiast ID)
+        $tags = wp_get_post_tags($post->ID, ['fields' => 'names']);
         if ($tags) {
             $post_data['tags'] = $tags;
         }

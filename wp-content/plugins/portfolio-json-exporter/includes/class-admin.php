@@ -19,7 +19,7 @@ class Portfolio_JSON_Exporter_Admin {
 
     public function render_admin_page() {
         // Testuj metody
-        //  $data = Portfolio_JSON_Exporter::export_menu('menu', 'pl');
+        //  $data = Portfolio_JSON_Exporter::export_posts('post', 'pl');
         //  pr($data); die;
         ?>
         <div class="wrap">
@@ -179,39 +179,53 @@ class Portfolio_JSON_Exporter_Admin {
 
     private function copy_featured_images($temp_dir) {
         wp_mkdir_p($temp_dir . '/images');
-
+        
         // Pobierz wszystkie attachment IDs
         $args = [
             'post_type' => 'attachment',
             'posts_per_page' => -1,
             'post_status' => 'inherit',
-        ];
-
-        $attachments = get_posts($args);
-        $uploads_dir = wp_upload_dir();
-        $base_path = $uploads_dir['basedir'];
-
+            ];
+            
+            $attachments = get_posts($args);
+            $uploads_dir = wp_upload_dir();
+            $base_path = $uploads_dir['basedir'];
+            $webp_base = dirname($base_path) . '/uploads-webpc/uploads';
+            
         foreach ($attachments as $attachment) {
             $file = get_attached_file($attachment->ID);
-            if ($file && file_exists($file)) {
-                // Sprawdź czy istnieje wersja webp
-                $file_to_copy = $this->get_webp_file_if_exists($file);
+            if (!$file) continue;
 
-                // Zachowaj strukturę YYYY/m/ z upload_dir
-                $relative_path = str_replace($base_path . '/', '', $file_to_copy);
-                $dest_file = $temp_dir . '/images/' . $relative_path;
-                $dest_dir = dirname($dest_file);
+            // Sprawdź czy istnieje wersja webp (preferuj webp jeśli dostępne)
+            $file_to_copy = $this->get_webp_file_if_exists($file);
 
-                // Stwórz folder jeśli nie istnieje
-                wp_mkdir_p($dest_dir);
-
-                copy($file_to_copy, $dest_file);
+            // Sprawdzaj czy plik do kopiowania istnieje (oryginał lub webp)
+            if (!file_exists($file_to_copy)) {
+                continue;
             }
+
+            // Zachowaj strukturę YYYY/m/ z upload_dir
+            // Jeśli to webp, usunięj /uploads-webpc/uploads/, inaczej usunięj /uploads/
+            if (strpos($file_to_copy, $webp_base) === 0) {
+                $relative_path = str_replace($webp_base . '/', '', $file_to_copy);
+            } else {
+                $relative_path = str_replace($base_path . '/', '', $file_to_copy);
+            }
+
+            $dest_file = $temp_dir . '/images/' . $relative_path;
+            $dest_dir = dirname($dest_file);
+
+            // Stwórz folder jeśli nie istnieje
+            wp_mkdir_p($dest_dir);
+
+            copy($file_to_copy, $dest_file);
         }
+        
     }
 
     private function get_webp_file_if_exists($original_file) {
         // Konstruuj ścieżkę webp zachowując strukturę YYYY/m/
+        // WebP konwerter dodaje .webp na koniec: 1-2.png → 1-2.png.webp
         $uploads_dir = wp_upload_dir();
         $base_path = $uploads_dir['basedir']; // /wp-content/uploads
         $webp_base = dirname($base_path) . '/uploads-webpc/uploads'; // /wp-content/uploads-webpc/uploads
@@ -219,11 +233,8 @@ class Portfolio_JSON_Exporter_Admin {
         // Pobierz relative path od upload_dir
         $relative_path = str_replace($base_path . '/', '', $original_file);
 
-        // Konstruuj pełną ścieżkę webp
-        $webp_file = $webp_base . '/' . $relative_path;
-
-        // Zamieniaj rozszerzenie na .webp
-        $webp_file = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $webp_file);
+        // Konstruuj pełną ścieżkę webp (dodaj .webp na koniec)
+        $webp_file = $webp_base . '/' . $relative_path . '.webp';
 
         if (file_exists($webp_file)) {
             return $webp_file;
