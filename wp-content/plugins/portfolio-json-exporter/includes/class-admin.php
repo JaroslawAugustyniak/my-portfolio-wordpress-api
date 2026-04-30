@@ -18,9 +18,6 @@ class Portfolio_JSON_Exporter_Admin {
     }
 
     public function render_admin_page() {
-        // Testuj metody
-        //  $data = Portfolio_JSON_Exporter::export_posts('post', 'pl');
-        //  pr($data); die;
         ?>
         <div class="wrap">
             <h1>Portfolio JSON Exporter</h1>
@@ -107,12 +104,6 @@ class Portfolio_JSON_Exporter_Admin {
                 json_encode($data['languages']['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
             );
 
-            // Zapisz globalne site settings
-            file_put_contents(
-                $temp_dir . '/siteSettings.json',
-                json_encode($data['siteSettings']['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-            );
-
             // Dla każdego języka stwórz folder i zapisz pliki
             foreach ($data['languages']['data'] as $lang) {
                 $lang_slug = $lang['slug'];
@@ -135,11 +126,6 @@ class Portfolio_JSON_Exporter_Admin {
                     file_put_contents(
                         $lang_dir . '/projects.json',
                         json_encode($lang_data['projects'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-                    );
-
-                    file_put_contents(
-                        $lang_dir . '/sections.json',
-                        json_encode($lang_data['sections'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
                     );
 
                     file_put_contents(
