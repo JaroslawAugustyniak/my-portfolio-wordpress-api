@@ -18,6 +18,9 @@ class Portfolio_JSON_Exporter_Admin {
     }
 
     public function render_admin_page() {
+        // Testuj metody
+        //  $data = Portfolio_JSON_Exporter::generate_all_json_files();
+        //  pr($data); die;
         ?>
         <div class="wrap">
             <h1>Portfolio JSON Exporter</h1>
@@ -126,6 +129,11 @@ class Portfolio_JSON_Exporter_Admin {
                     file_put_contents(
                         $lang_dir . '/projects.json',
                         json_encode($lang_data['projects'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                    );
+
+                    file_put_contents(
+                        $lang_dir . '/sections.json',
+                        json_encode($lang_data['sections'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
                     );
 
                     file_put_contents(
