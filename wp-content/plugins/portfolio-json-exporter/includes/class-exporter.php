@@ -352,20 +352,11 @@ class Portfolio_JSON_Exporter {
 
     public static function export_site_settings() {
         $settings = [
-            'name' => get_bloginfo('name'),
+            'title' => get_bloginfo('name'),
             'description' => get_bloginfo('description'),
-            'site_url' => get_bloginfo('url'),
-            'home_url' => home_url(),
-            'admin_email' => get_option('admin_email'),
-            'language' => get_bloginfo('language'),
-            'charset' => get_bloginfo('charset'),
-            'timezone' => get_option('timezone_string'),
-            'date_format' => get_option('date_format'),
-            'time_format' => get_option('time_format'),
-            'posts_per_page' => get_option('posts_per_page'),
         ];
 
-        // Dodaj logo
+        // Dodaj logo z theme customizer
         $logo_id = get_theme_mod('custom_logo');
         if ($logo_id) {
             $logo_url = wp_get_attachment_image_url($logo_id, 'full');
@@ -374,46 +365,81 @@ class Portfolio_JSON_Exporter {
             }
         }
 
-        // Dodaj favicon
-        $favicon_url = get_theme_mod('favicon');
-        if (!$favicon_url && get_option('site_icon')) {
-            $favicon_url = wp_get_attachment_image_url(get_option('site_icon'), 'full');
-        }
-        if ($favicon_url) {
-            $settings['favicon'] = self::convert_image_url_to_api_path($favicon_url);
-        }
-
-        // Dodaj dane z Yoast SEO jeśli jest zainstalowany
+        // Pobierz dane z RankMath
         if (function_exists('get_option')) {
-            $yoast_seo = [];
-
-            // Pobierz główne ustawienia Yoast
-            if ($titles = get_option('wpseo_titles')) {
-                $yoast_seo['titles'] = self::convert_urls_in_data($titles);
-            }
-            if ($social = get_option('wpseo_social')) {
-                $yoast_seo['social'] = self::convert_urls_in_data($social);
-            }
-            if ($permalinks = get_option('wpseo_permalinks')) {
-                $yoast_seo['permalinks'] = self::convert_urls_in_data($permalinks);
-            }
-            if ($xml_sitemap = get_option('wpseo_xml_sitemap_settings')) {
-                $yoast_seo['xml_sitemap'] = self::convert_urls_in_data($xml_sitemap);
-            }
-            if ($breadcrumbs = get_option('wpseo_breadcrumbs')) {
-                $yoast_seo['breadcrumbs'] = self::convert_urls_in_data($breadcrumbs);
+            // Favicon z RankMath
+            $favicon_url = get_option('rank_math_favicon_url');
+            if ($favicon_url) {
+                $settings['favicon'] = self::convert_image_url_to_api_path($favicon_url);
             }
 
-            if ($yoast_seo) {
-                $settings['seo'] = $yoast_seo;
-                $og_image = $yoast_seo['social']['og_default_image'] ?? '';
-                if ($og_image) {
-                    $settings['seo']['og_image'] = self::convert_image_url_to_api_path($og_image);
-                }
+            // OG Image z RankMath
+            $og_image_url = get_option('rank_math_og_image');
+            if (!$og_image_url) {
+                $og_image_url = get_option('rank_math_og_image_default');
+            }
+            if ($og_image_url) {
+                $settings['image'] = self::convert_image_url_to_api_path($og_image_url);
             }
         }
 
         return $settings;
+    }
+
+    public static function export_pages_metadata($lang = null) {
+        $pages = self::export_pages($lang);
+        $result = [];
+
+        foreach ($pages as $page) {
+            $post_id = $page['id'];
+
+            // RankMath fields
+            $rm_title = get_post_meta($post_id, 'rank_math_title', true);
+            $rm_description = get_post_meta($post_id, 'rank_math_description', true);
+            $rm_image = get_post_meta($post_id, 'rank_math_og_image', true);
+
+            // Fallback to post data
+            $title = $rm_title ?: ($page['title']['rendered'] ?? '');
+            $description = $rm_description ?: ($page['excerpt']['rendered'] ?? '');
+            $image = $rm_image ? self::convert_image_url_to_api_path($rm_image) : ($page['featured_image']['source_url'] ?? '');
+
+            $result[] = [
+                'slug' => $page['slug'],
+                'title' => $title,
+                'description' => $description,
+                'image' => $image,
+            ];
+        }
+
+        return $result;
+    }
+
+    public static function export_posts_metadata($lang = null) {
+        $posts = self::export_posts('post', $lang);
+        $result = [];
+
+        foreach ($posts as $post) {
+            $post_id = $post['id'];
+
+            // RankMath fields
+            $rm_title = get_post_meta($post_id, 'rank_math_title', true);
+            $rm_description = get_post_meta($post_id, 'rank_math_description', true);
+            $rm_image = get_post_meta($post_id, 'rank_math_og_image', true);
+
+            // Fallback to post data
+            $title = $rm_title ?: ($post['title']['rendered'] ?? '');
+            $description = $rm_description ?: ($post['excerpt']['rendered'] ?? '');
+            $image = $rm_image ? self::convert_image_url_to_api_path($rm_image) : ($post['featured_image']['source_url'] ?? '');
+
+            $result[] = [
+                'slug' => $post['slug'],
+                'title' => $title,
+                'description' => $description,
+                'image' => $image,
+            ];
+        }
+
+        return $result;
     }
 
     private static function get_page_data($post, $lang = null) {
@@ -530,13 +556,18 @@ class Portfolio_JSON_Exporter {
             // Dla każdego języka eksportuj dane
             foreach ($languages as $lang) {
                 $lang_slug = $lang['slug'];
+
+                // siteSettings z metadanymi stron i wpisów
+                $site_settings = self::export_site_settings();
+                $site_settings['pages'] = self::export_pages_metadata($lang_slug);
+                $site_settings['posts'] = self::export_posts_metadata($lang_slug);
+
                 $lang_dir = [
                     'pages' => self::export_pages($lang_slug),
                     'posts' => self::export_posts('post', $lang_slug),
                     'projects' => self::export_projects_recommended($lang_slug),
-                    'sections' => self::export_sections($lang_slug),
                     'menu' => self::export_menu('menu', $lang_slug),
-                    'siteSettings' => self::export_site_settings(),
+                    'siteSettings' => $site_settings,
                 ];
 
                 $result[$lang_slug] = [
@@ -544,12 +575,6 @@ class Portfolio_JSON_Exporter {
                     'data' => $lang_dir,
                 ];
             }
-
-            // Globalne ustawienia
-            $result['siteSettings'] = [
-                'success' => true,
-                'data' => self::export_site_settings(),
-            ];
             
             return $result;
 
