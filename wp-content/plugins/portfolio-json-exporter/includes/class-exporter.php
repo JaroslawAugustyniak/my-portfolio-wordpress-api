@@ -365,19 +365,16 @@ class Portfolio_JSON_Exporter {
             }
         }
 
-        // Pobierz dane z RankMath
-        if (function_exists('get_option')) {
-            // Favicon z RankMath
-            $favicon_url = get_option('rank_math_favicon_url');
-            if ($favicon_url) {
-                $settings['favicon'] = self::convert_image_url_to_api_path($favicon_url);
-            }
+        // Favicon z WordPress site icon
+        $favicon_url = get_site_icon_url();
+        if ($favicon_url) {
+            $settings['favicon'] = self::convert_image_url_to_api_path($favicon_url);
+        }
 
-            // OG Image z RankMath
-            $og_image_url = get_option('rank_math_og_image');
-            if (!$og_image_url) {
-                $og_image_url = get_option('rank_math_og_image_default');
-            }
+        // OG Image z RankMath - główny cover/featured image
+        $rank_math_titles = get_option('rank-math-options-titles');
+        if ($rank_math_titles && isset($rank_math_titles['open_graph_image'])) {
+            $og_image_url = $rank_math_titles['open_graph_image'];
             if ($og_image_url) {
                 $settings['image'] = self::convert_image_url_to_api_path($og_image_url);
             }
@@ -392,6 +389,12 @@ class Portfolio_JSON_Exporter {
 
         foreach ($pages as $page) {
             $post_id = $page['id'];
+
+            // DEBUG: Check available meta keys
+            if (count($result) === 0) {
+                $all_meta = get_post_meta($post_id);
+                error_log('RankMath meta keys for post ' . $post_id . ': ' . json_encode(array_keys($all_meta)));
+            }
 
             // RankMath fields
             $rm_title = get_post_meta($post_id, 'rank_math_title', true);
@@ -428,7 +431,7 @@ class Portfolio_JSON_Exporter {
 
             // Fallback to post data
             $title = $rm_title ?: ($post['title']['rendered'] ?? '');
-            $description = $rm_description ?: ($post['excerpt']['rendered'] ?? '');
+            $description = $rm_description ?: '';
             $image = $rm_image ? self::convert_image_url_to_api_path($rm_image) : ($post['featured_image']['source_url'] ?? '');
 
             $result[] = [
