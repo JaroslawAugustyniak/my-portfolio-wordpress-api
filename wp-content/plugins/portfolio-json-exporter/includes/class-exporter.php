@@ -2,6 +2,20 @@
 
 class Portfolio_JSON_Exporter {
 
+    private static function clean_description($text, $limit = 160) {
+        // Usuń HTML tagi
+        $text = wp_strip_all_tags($text);
+        // Usuń extra whitespace i newlines
+        $text = preg_replace('/\s+/', ' ', $text);
+        // Trim
+        $text = trim($text);
+        // Ogranicz do limitu
+        if (mb_strlen($text) > $limit) {
+            $text = mb_substr($text, 0, $limit) . '...';
+        }
+        return $text;
+    }
+
     private static function get_attachment_url_with_webp($attachment_id) {
         if (!$attachment_id) return '';
 
@@ -390,20 +404,14 @@ class Portfolio_JSON_Exporter {
         foreach ($pages as $page) {
             $post_id = $page['id'];
 
-            // DEBUG: Check available meta keys
-            if (count($result) === 0) {
-                $all_meta = get_post_meta($post_id);
-                error_log('RankMath meta keys for post ' . $post_id . ': ' . json_encode(array_keys($all_meta)));
-            }
-
             // RankMath fields
             $rm_title = get_post_meta($post_id, 'rank_math_title', true);
             $rm_description = get_post_meta($post_id, 'rank_math_description', true);
-            $rm_image = get_post_meta($post_id, 'rank_math_og_image', true);
+            $rm_image = get_post_meta($post_id, 'rank_math_facebook_image', true);
 
             // Fallback to post data
             $title = $rm_title ?: ($page['title']['rendered'] ?? '');
-            $description = $rm_description ?: ($page['excerpt']['rendered'] ?? '');
+            $description = $rm_description ?: self::clean_description($page['excerpt']['rendered'] ?? '');
             $image = $rm_image ? self::convert_image_url_to_api_path($rm_image) : ($page['featured_image']['source_url'] ?? '');
 
             $result[] = [
@@ -427,11 +435,11 @@ class Portfolio_JSON_Exporter {
             // RankMath fields
             $rm_title = get_post_meta($post_id, 'rank_math_title', true);
             $rm_description = get_post_meta($post_id, 'rank_math_description', true);
-            $rm_image = get_post_meta($post_id, 'rank_math_og_image', true);
+            $rm_image = get_post_meta($post_id, 'rank_math_facebook_image', true);
 
             // Fallback to post data
             $title = $rm_title ?: ($post['title']['rendered'] ?? '');
-            $description = $rm_description ?: '';
+            $description = $rm_description ?: self::clean_description($post['excerpt']['rendered'] ?? '');
             $image = $rm_image ? self::convert_image_url_to_api_path($rm_image) : ($post['featured_image']['source_url'] ?? '');
 
             $result[] = [
