@@ -19,11 +19,18 @@ function pr($data) {
 	echo '</pre>';
 }
 
+
 function moje_theme_setup() {
     // Włącza obsługę obrazków wyróżniających
     add_theme_support( 'post-thumbnails' );
+
+    // Włącza obsługę logo w personalizatorze (Tożsamość witryny)
+    add_theme_support( 'custom-logo', array(
+        'height'      => 250,
+        'width'       => 250,
+        'flex-width'  => true,
+        'flex-height' => true,
+    ) );
 }
 
 add_action( 'after_setup_theme', 'moje_theme_setup' );
-
-
